@@ -4,11 +4,13 @@ import openai  # OpenAI API
 import matplotlib.pyplot as plt
 from io import BytesIO
 
-openai.api_key = st.secrets["KEY"]
-openai.api_base = st.secrets["BASE"]
-openai.api_type = st.secrets["TYPE"]
-openai.api_version = st.secrets["VERSION"]
-deployment_name = st.secrets["NAME"]
+# OpenAI API Configuration
+openai.api_key = "14560021aaf84772835d76246b53397a"
+openai.api_base = "https://amrxgenai.openai.azure.com/"
+openai.api_type = 'azure'
+openai.api_version = '2024-02-15-preview'
+deployment_name = 'gpt'
+
 
 
 # Function to analyze chatbot queries with OpenAI
@@ -19,7 +21,7 @@ def analyze_chatbot(question, df):
     Question: {question}
     """
     response = openai.ChatCompletion.create(
-        engine='gpt-4',
+        engine='gpt',
         messages=[{"role": "system", "content": "You are a data analyst expert."},
                   {"role": "user", "content": prompt}],
         temperature=0.7
