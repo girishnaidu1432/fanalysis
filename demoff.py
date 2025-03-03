@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import openai  # OpenAI API
 import matplotlib.pyplot as plt
-import textwrap
 from io import BytesIO
 from docx import Document
 
@@ -42,52 +41,9 @@ def plot_trend(df, group_by_col, value_col, title):
     plt.tight_layout()
     st.pyplot(fig)
 
-if app_mode == "Feature Analysis":
-    st.title("Feature Analysis with OpenAI")
-    uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx", "xls"])
-    
-    if uploaded_file:
-        df = pd.read_excel(uploaded_file)
-        st.dataframe(df.head())
-        
-        required_columns = {"Feature", "Description"}
-        if required_columns.issubset(set(df.columns)):
-            st.success("File successfully uploaded and validated!")
-            tab1, tab2 = st.tabs(["Analysis", "Chatbot"])
-            
-            with tab1:
-                country_columns = [col for col in df.columns if col not in {"S.No", "Feature", "Description", "Common", "Remarks"}]
-                analysis_results = []
-                
-                for country in country_columns:
-                    country_features = df[["Feature", "Description", country]].dropna()
-                    country_features = country_features[country_features[country].astype(str).str.lower() == "yes"]
-                    
-                    if not country_features.empty:
-                        summary = analyze_chatbot(f"Summarize features for {country}", country_features)
-                        analysis_results.append({"Country": country, "Summary": summary})
-                        st.write(summary)
-                
-                if analysis_results:
-                    results_df = pd.DataFrame(analysis_results)
-                    st.dataframe(results_df)
-                    st.download_button("Download Analysis Results", results_df.to_csv(index=False), "analysis_results.csv")
-            
-            with tab2:
-                user_question = st.text_input("Ask a question about the analysis:", key="feature_chat_input")
-                if user_question:
-                    response = analyze_chatbot(user_question, df)
-                    st.write(response)
-                    st.rerun()
-        else:
-            st.error("The uploaded file must contain 'Feature' and 'Description' columns.")
-
-elif app_mode == "Report Generator":
+if app_mode == "Report Generator":
     st.title("Report Generator with OpenAI")
     uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
-    
-    if "search_history" not in st.session_state:
-        st.session_state.search_history = []
     
     if uploaded_file:
         try:
@@ -132,12 +88,15 @@ elif app_mode == "Report Generator":
                         "Bottom Performers analysis - Individual Bonuses",
                         "Gender Wise Analysis"
                     ]
+                    
                     selected_question = st.selectbox("Choose a predefined question:", [""] + predefined_questions, key="predefined_question")
                     user_question = st.text_input("Or enter your own question:", key="report_chat_input")
-                    if selected_question:
-                        user_question = selected_question
-                    if user_question:
-                        response = analyze_chatbot(user_question, df)
-                        st.session_state.search_history.insert(0, (user_question, response))
-                        st.write("**Response:**", response)
-                        st.rerun()
+                    search_clicked = st.button("Search")
+                    
+                    if search_clicked or user_question:
+                        if selected_question:
+                            user_question = selected_question
+                        
+                        if user_question:
+                            response = analyze_chatbot(user_question, df)
+                            st.write("**Response:**", response)
