@@ -4,6 +4,13 @@ import openai  # OpenAI API
 import matplotlib.pyplot as plt
 from io import BytesIO
 
+# OpenAI API Configuration
+openai.api_key = "14560021aaf84772835d76246b53397a"
+openai.api_base = "https://amrxgenai.openai.azure.com/"
+openai.api_type = 'azure'
+openai.api_version = '2024-02-15-preview'
+deployment_name = 'gpt'
+
 def analyze_chatbot(question, df):
     prompt = f"""
     Using the data provided below, analyze and respond to the following question:
