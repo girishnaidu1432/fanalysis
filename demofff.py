@@ -122,7 +122,7 @@ elif app_mode == "Report Generator":
                 st.subheader("Chatbot Analysis")
 
                 # Ensure the input field is initialized
-                if "report_chat_input" not in st.session_state:
+                if "report_chat_input" in st.session_state:
                     st.session_state.report_chat_input = ""
 
                 predefined_questions = [
