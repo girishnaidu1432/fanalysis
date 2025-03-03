@@ -71,55 +71,42 @@ if uploaded_file:
             
             with tab1:
                 st.subheader("Basic Analysis")
-                st.subheader("Role-wise Gross Earnings")
-                plot_trend(df, "Paid As Position", "Gross Earnings", "Gross Earnings by Role")
+                analysis_options = [
+                    ("Role-wise Gross Earnings", "Paid As Position", "Gross Earnings"),
+                    ("Total Bonus Distribution", "Paid As Position", "Basic commission Bonus(BCB)"),
+                    ("Performance Bonus by Position", "Paid As Position", "Performance Bonus (PCB)"),
+                    ("Recruitment Commission Analysis", "Recruiter Name", "Recruitment Commission Bonus (RCB)"),
+                    ("Manager-wise Bonus Distribution", "Manager Name", "Gross Earnings"),
+                    ("Personal Sales Contribution", "First Name", "Personal Sales Unit(PSU)"),
+                    ("Team Units Contribution", "First Name", "Team Units(TU)"),
+                    ("Adhoc Payments Analysis", "First Name", "Adhoc Payment(ADP)"),
+                    ("Gender-Based Earnings", "Gender", "Gross Earnings"),
+                    ("Bonus Comparison by Gender", "Gender", "Basic commission Bonus(BCB)")
+                ]
                 
-                st.subheader("Total Bonus Distribution")
-                plot_trend(df, "Paid As Position", "Basic commission Bonus(BCB)", "Total Bonus Distribution")
+                for title, group_by, value in analysis_options:
+                    st.subheader(title)
+                    plot_trend(df, group_by, value, title)
             
             with tab2:
                 st.subheader("Chatbot - Insights, Trends, and Analysis")
-                predefined_questions = [
-                    "What insights on Bonus we can get from this data?",
-                    "Why is the Basic Commission Bonus (BCB) showing incorrect results when searched by abbreviation?",
-                    "How is the total commission calculated, and does it include all necessary components?",
-                    "Can you verify the accuracy of Total Commissions, including BCB, SCB, RCB, and PCB?",
-                    "Who are the top earners, including all commission components?",
-                    "Analyze manager-wise bonus distribution for fair allocation.",
-                    "Visualize top earners and their contributions to Gross Earnings.",
-                    "Provide insights into Paid As Position trends for bonus distribution.",
-                ]
+                user_question = st.text_input("Enter your question:", key="chat_input")
                 
-                for question in predefined_questions:
-                    if st.button(question):
-                        response = analyze_chatbot(question, df)
-                        st.write(f"**Q: {question}**")
-                        st.write(f"**A:** {response}")
-                        
-                        if "Top Earners" in question:
-                            df["Total Commissions"] = df[["Basic commission Bonus(BCB)", "Super Commission Bonus(SCB)", "Recruitment Commission Bonus (RCB)", "Performance Bonus (PCB)"]].sum(axis=1)
-                            top_earners = df.nlargest(10, "Total Commissions")[["First Name", "Last Name", "Total Commissions"]]
-                            top_earners.insert(0, "Serial Number", range(1, 11))
-                            st.write("**Top Earners:**")
-                            st.dataframe(top_earners)
-                        
-                        st.session_state.search_history.append({"question": question, "response": response})
-                
-                st.subheader("Ask the Chatbot Anything")
-                user_question = st.text_input("Enter your question:")
-                if st.button("Search"):
-                    if user_question:
-                        response = analyze_chatbot(user_question, df)
-                        st.write(f"**Q: {user_question}**")
-                        st.write(f"**A:** {response}")
-                        st.session_state.search_history.append({"question": user_question, "response": response})
-                    else:
-                        st.warning("Please enter a question before searching.")
+                if user_question:
+                    response = analyze_chatbot(user_question, df)
+                    st.write(f"**Q: {user_question}**")
+                    st.write(f"**A:** {response}")
+                    st.session_state.search_history.append({"question": user_question, "response": response})
                 
                 if st.session_state.search_history:
                     st.subheader("Search History")
                     for entry in st.session_state.search_history:
                         st.write(f"**Q: {entry['question']}**")
                         st.write(f"**A:** {entry['response']}")
+                    
+                    if st.button("Download History"):
+                        history_df = pd.DataFrame(st.session_state.search_history)
+                        history_csv = history_df.to_csv(index=False).encode('utf-8')
+                        st.download_button("Download CSV", history_csv, "search_history.csv", "text/csv", key='download-csv')
         else:
             st.error("Uploaded file is missing required columns.")
