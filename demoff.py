@@ -78,7 +78,7 @@ if app_mode == "Feature Analysis":
                 if user_question:
                     response = analyze_chatbot(user_question, df)
                     st.write(response)
-                    st.session_state.feature_chat_input = ""
+                    st.rerun()
         else:
             st.error("The uploaded file must contain 'Feature' and 'Description' columns.")
 
@@ -123,15 +123,21 @@ elif app_mode == "Report Generator":
                         plot_trend(df, group_by, value, title)
                 
                 with tab2:
-                    user_question = st.text_input("Ask a question about the analysis:", key="report_chat_input")
+                    predefined_questions = [
+                        "Overall Bonus Analysis",
+                        "Role wise bonus analysis with Total Bonus earned",
+                        "Top Performers analysis - Total (Gross earnings)",
+                        "Top Performers analysis - Individual Bonuses",
+                        "Bottom Performers analysis - Total (Gross earnings)",
+                        "Bottom Performers analysis - Individual Bonuses",
+                        "Gender Wise Analysis"
+                    ]
+                    selected_question = st.selectbox("Choose a predefined question:", [""] + predefined_questions, key="predefined_question")
+                    user_question = st.text_input("Or enter your own question:", key="report_chat_input")
+                    if selected_question:
+                        user_question = selected_question
                     if user_question:
                         response = analyze_chatbot(user_question, df)
                         st.session_state.search_history.insert(0, (user_question, response))
                         st.write("**Response:**", response)
-                        st.session_state.report_chat_input = ""
-                    
-                    if st.session_state.search_history:
-                        st.subheader("Search History")
-                        for q, r in st.session_state.search_history:
-                            st.write(f"**Q:** {q}")
-                            st.write(f"**A:** {r}")
+                        st.rerun()
