@@ -16,6 +16,32 @@ openai.api_type = 'azure'
 openai.api_version = '2024-02-15-preview'
 deployment_name = 'gpt'
 
+def analyze_chatbot(question, df):
+    prompt = f"""
+    Using the data provided below, analyze and respond to the following question:
+    {df.to_string(index=False)}
+    Question: {question}
+    """
+    response = openai.ChatCompletion.create(
+        engine=deployment_name,
+        messages=[{"role": "system", "content": "You are a data analyst expert."},
+                  {"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+    return response["choices"][0]["message"]["content"].strip()
+
+def plot_trend(df, group_by_col, value_col, title):
+    trend_data = df.groupby(group_by_col)[value_col].sum().reset_index()
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.bar(trend_data[group_by_col], trend_data[value_col], color="skyblue")
+    plt.xticks(rotation=90, ha='right', fontsize=8)
+    plt.title(title)
+    plt.xlabel(group_by_col)
+    plt.ylabel(value_col)
+    plt.tight_layout()
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.pyplot(fig)
+
 if app_mode == "Feature Analysis":
     st.title("Feature Analysis with OpenAI")
     st.write("File Upload")
@@ -103,39 +129,3 @@ elif app_mode == "Report Generator":
             required_columns = {"Partner Id", "Last Name", "Paid As Position", "Gender", "Date of Birth", "Manager Name", "Recruiter Name", "Paid As", "Personal Sales Unit(PSU)", "Team Units(TU)", "First Name", "Adhoc Payment(ADP)", "Recruitment Commission Bonus (RCB)", "Basic commission Bonus(BCB)", "Super Commission Bonus(SCB)", "Performance Bonus (PCB)", "Gross Earnings"}
             if required_columns.issubset(set(df.columns)):
                 st.success("File successfully uploaded and validated!")
-                
-                tab1, tab2 = st.tabs(["Analysis", "Chatbot"])
-                
-                with tab1:
-                    analysis_options = [
-                        ("Role-wise Gross Earnings", "Paid As Position", "Gross Earnings"),
-                        ("Total Bonus Distribution", "Paid As Position", "Basic commission Bonus(BCB)"),
-                        ("Performance Bonus by Position", "Paid As Position", "Performance Bonus (PCB)"),
-                        ("Recruitment Commission Analysis", "Recruiter Name", "Recruitment Commission Bonus (RCB)"),
-                        ("Manager-wise Bonus Distribution", "Manager Name", "Gross Earnings"),
-                        ("Personal Sales Contribution", "First Name", "Personal Sales Unit(PSU)"),
-                        ("Team Units Contribution", "First Name", "Team Units(TU)"),
-                        ("Adhoc Payments Analysis", "First Name", "Adhoc Payment(ADP)"),
-                        ("Gender-Based Earnings", "Gender", "Gross Earnings"),
-                        ("Bonus Comparison by Gender", "Gender", "Basic commission Bonus(BCB)")
-                    ]
-                    
-                    for title, group_by, value in analysis_options:
-                        st.subheader(title)
-                        plot_trend(df, group_by, value, title)
-                
-                with tab2:
-                    st.subheader("Chatbot - Insights, Trends, and Analysis")
-                    user_question = st.text_input("Enter your question:")
-                    
-                    if user_question:
-                        response = analyze_chatbot(user_question, df)
-                        st.write("**Response:**", response)
-                        
-                        st.session_state.search_history.insert(0, {"question": user_question, "response": response})
-                        
-                    if st.session_state.search_history:
-                        st.subheader("Search History")
-                        for entry in st.session_state.search_history:
-                            with st.expander(entry['question']):
-                                st.write(entry['response'])
