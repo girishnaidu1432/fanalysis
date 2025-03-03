@@ -1,4 +1,5 @@
 openai==0.28
 pandas
 matplotlib
-docx
+python-docx
+
