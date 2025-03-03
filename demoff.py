@@ -129,3 +129,54 @@ elif app_mode == "Report Generator":
             required_columns = {"Partner Id", "Last Name", "Paid As Position", "Gender", "Date of Birth", "Manager Name", "Recruiter Name", "Paid As", "Personal Sales Unit(PSU)", "Team Units(TU)", "First Name", "Adhoc Payment(ADP)", "Recruitment Commission Bonus (RCB)", "Basic commission Bonus(BCB)", "Super Commission Bonus(SCB)", "Performance Bonus (PCB)", "Gross Earnings"}
             if required_columns.issubset(set(df.columns)):
                 st.success("File successfully uploaded and validated!")
+                tab1, tab2 = st.tabs(["Analysis", "Chatbot"])
+            
+            with tab1:
+                st.subheader("Basic Analysis")
+                analysis_options = [
+                    ("Role-wise Gross Earnings", "Paid As Position", "Gross Earnings"),
+                    ("Total Bonus Distribution", "Paid As Position", "Basic commission Bonus(BCB)"),
+                    ("Performance Bonus by Position", "Paid As Position", "Performance Bonus (PCB)"),
+                    ("Recruitment Commission Analysis", "Recruiter Name", "Recruitment Commission Bonus (RCB)"),
+                    ("Manager-wise Bonus Distribution", "Manager Name", "Gross Earnings"),
+                    ("Personal Sales Contribution", "First Name", "Personal Sales Unit(PSU)"),
+                    ("Team Units Contribution", "First Name", "Team Units(TU)"),
+                    ("Adhoc Payments Analysis", "First Name", "Adhoc Payment(ADP)"),
+                    ("Gender-Based Earnings", "Gender", "Gross Earnings"),
+                    ("Bonus Comparison by Gender", "Gender", "Basic commission Bonus(BCB)")
+                ]
+                
+                for title, group_by, value in analysis_options:
+                    st.subheader(title)
+                    plot_trend(df, group_by, value, title)
+            
+            with tab2:
+                st.subheader("Chatbot - Insights, Trends, and Analysis")
+                user_question = st.text_input("Enter your question:", key="chat_input", value="")
+                
+                if user_question:
+                    response = analyze_chatbot(user_question, df)
+                    st.write("**Response:**", response)
+                    
+                    st.session_state.search_history.insert(0, {"question": user_question, "response": response})
+                    st.experimental_rerun()  # Refresh UI to show updated history
+                    
+                if st.session_state.search_history:
+                    st.subheader("Search History")
+                    for entry in st.session_state.search_history:
+                        with st.expander(entry['question']):
+                            st.write(entry['response'])
+                    
+                    if st.button("Download History"):
+                        doc = Document()
+                        doc.add_heading("Chatbot Search History", level=1)
+                        for entry in st.session_state.search_history:
+                            doc.add_heading(f"Q: {entry['question']}", level=2)
+                            doc.add_paragraph(f"A: {entry['response']}")
+                        
+                        buffer = BytesIO()
+                        doc.save(buffer)
+                        buffer.seek(0)
+                        st.download_button("Download DOCX", buffer, "search_history.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", key='download-docx')
+        else:
+            st.error("Uploaded file is missing required columns.")
