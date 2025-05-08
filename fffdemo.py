@@ -11,23 +11,49 @@ openai.api_type = 'azure'
 openai.api_version = '2024-02-15-preview'
 deployment_name = 'gpt'
 
-# Function to analyze chatbot queries with OpenAI
-def analyze_chatbot(question, df):
-    prompt = f"""
-    Using the data provided below, analyze and respond to the following question:
-    {df.to_string(index=False)}
-    Question: {question}
+def analyze_chatbot(question, df, max_rows=30, max_columns=10):
     """
+    Analyze a question using the GPT model, with controlled input size to prevent token overflow.
+    """
+    import pandas as pd
+
+    # Truncate rows and columns
+    df_limited = df.iloc[:max_rows, :max_columns].copy()
+
+    # Add note for user
+    note = (
+        f"NOTE: Original dataset had {df.shape[0]} rows and {df.shape[1]} columns. "
+        f"Only the first {max_rows} rows and first {max_columns} columns are used to prevent token overflow.\n\n"
+    )
+
+    # Convert truncated DataFrame to string
+    df_text = df_limited.to_string(index=False)
+
+    # Final prompt
+    prompt = f"""
+    You are an AI analyst. Given the structured dataset below, answer the user's question as clearly and accurately as possible.
+
+    {note}
+    Data Snapshot:
+    {df_text}
+
+    Question:
+    {question}
+    """
+
+    # Call OpenAI
     response = openai.ChatCompletion.create(
-        engine=deployment_name,
+        model="gpt-4-0125-preview",  # Or your model/deployment name
         messages=[
-            {"role": "system", "content": "You are a professional AI data analyst. Provide clear, concise, and insightful answers."},
+            {"role": "system", "content": "You are a helpful data analyst AI assistant."},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.7,
-        max_tokens=10000
+        temperature=0.5,
+        max_tokens=1000  # response limit only
     )
+
     return response["choices"][0]["message"]["content"].strip()
+
 
 # Function to plot trends
 def plot_trend(df, group_by_col, value_col, title):
