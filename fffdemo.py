@@ -24,7 +24,8 @@ def analyze_chatbot(question, df):
             {"role": "system", "content": "You are a professional AI data analyst. Provide clear, concise, and insightful answers."},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.7
+        temperature=0.7,
+        max_tokens=10000
     )
     return response["choices"][0]["message"]["content"].strip()
 
